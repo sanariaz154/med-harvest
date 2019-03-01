@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ 
+<config charset="ISO-8859-1">
+    
+    <var-def name="startUrl">https://www.nhsinform.scot/illnesses-and-conditions/a-to-z</var-def>
+    
+    <file action="write" path="C:\Users\sanar\Desktop\web harvester\a2ztest.xml" charset="UTF-8">
+        <template>
+            <![CDATA[ <diseases> ]]>
+        </template>
+        
+        <loop item="articleUrl" maxloops="10" index="i">
+            <!-- collects URLs of all articles from the front page -->
+            <list>
+                <xpath expression="//a[@class='col small-12 medium-6 large-4 module'][1]/@href">
+                    <html-to-xml>
+                        <http url="${startUrl}"/>
+                    </html-to-xml>
+                </xpath>
+            </list>
+            
+            <!-- downloads each article and extract data from it -->
+            <body>
+                <xquery>
+                    <xq-param name="doc">
+                        <html-to-xml>
+                            <http url="${sys.fullUrl(startUrl, articleUrl)}?&amp;pagewanted=print"/>
+                        </html-to-xml>
+                    </xq-param>
+                    <xq-expression><![CDATA[
+                        declare variable $doc as node() external;
+                        
+                       
+                        let $title := data($doc//h1)
+                        let $symp := data($doc//div[@id='symptoms']//ul) 
+                            return
+                                <disease>
+                                    <title>{data($title)}</title>
+                                    <symptom>{data($symp)}</symptom>
+                                </disease>
+                    ]]></xq-expression>
+                </xquery>
+            </body>
+        </loop>
+        
+        <![CDATA[ </diseases> ]]>
+    </file>
+    
+</config>
