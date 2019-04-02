@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ 
+<config charset="ISO-8859-1">
+    
+    <var-def name="startUrl">https://www.nhsinform.scot/illnesses-and-conditions/a-to-z</var-def>
+    
+    
+        
+        <loop item="articleUrl" index="i">
+            <!-- collects URLs of all articles from the front page -->
+            <list>
+                <xpath expression="//a[@class='col small-12 medium-6 large-4 module'][1]/@href">
+                    <html-to-xml>
+                        <http url="${startUrl}"/>
+                    </html-to-xml>
+                </xpath>
+            </list>
+            
+            <!-- downloads each article and extract data from it -->
+            <body>
+            	
+            	<file action="write" path="C:\Users\sanar\Desktop\miscellaneous\med-harvest\TMK\a2z\${i}.xml" charset="UTF-8">
+        <template>
+            <![CDATA[ <file1> ]]>
+        </template>
+                <xquery>
+                    <xq-param name="doc">
+                        <html-to-xml>
+                            <http url="${sys.fullUrl(startUrl, articleUrl)}?&amp;pagewanted=print"/>
+                        </html-to-xml>
+                    </xq-param>
+                    <xq-expression><![CDATA[
+                        declare variable $doc as node() external;
+                        
+                       
+                        let $title := data($doc//h1)
+                        let $title:= concat('\nTITLE:',data($title))
+                        let $symp := data($doc//div[@class='col small-12 large-9' and position()>1 ]) 
+                        let $symprefine := replace(data($symp),'Symptoms of[A-Za-z," "''"]*\n','SYMPTOMS: ')                        	
+                        let $symprefine := replace(data($symprefine),'Treating[A-Za-z," "''"]*\n','TREATMENT: ')
+                        let $symprefine := replace(data($symprefine),'Causes of[A-Za-z," "''"]*\n','CAUSES: ')
+                        let $symprefine := replace(data($symprefine),'Diagnosing [A-Za-z," "''"]*\n','DIAGNOSIS: ')                       
+                        let $symprefine := replace(data($symprefine),'Preventing [A-Za-z," "''"]*\n','PREVENTION: ')
+                        let $symprefine := replace(data($symprefine),'Complications[A-Za-z," "''"]*\n','COMPLICATIONS: ')
+                        let $symprefine := replace(data($symprefine),'About[A-Za-z," "''"]*\n','ABOUT: ')
+                            return
+                                <first>
+                                    {data($title)}
+                                    {data($symprefine)}
+                                </first>
+                    ]]></xq-expression>
+                </xquery>
+                
+                     <![CDATA[ </diseases> ]]>
+    </file>
+            </body>
+        </loop>
+        
+   
+    
+</config>

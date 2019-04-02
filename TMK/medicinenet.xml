@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ 
+<config charset="ISO-8859-1">
+    
+    <var-def name="startUrl">https://www.medicinenet.com/diseases_and_conditions/article.htm</var-def>
+    
+    
+        
+   <loop item="pagestartUrl" index="m">
+        	
+        	 
+            <!-- collects URLs of all articles from the front page -->
+            <list>
+                <xpath expression="//div[@class='AZtop']//ul//li//a/@href">
+                    <html-to-xml>
+                        <http url="${startUrl}"/>
+                    </html-to-xml>
+                </xpath>
+            </list> 
+   
+   
+        
+       
+            
+            <!-- downloads each article and extract data from it -->
+            <body>
+            	
+            	
+        
+         <loop item="articleUrl" index="i">
+        	
+        	 
+            <!-- collects URLs of all articles from the front page -->
+            <list>
+                <xpath expression="//div[@class='AZ_results']//ul//li//a/@href">
+                    <html-to-xml>
+                        <http url="${sys.fullUrl(startUrl, pagestartUrl)}"/>
+                    </html-to-xml>
+                </xpath>
+            </list>
+            <body>
+            	  <file action="write" path="C:\Users\sanar\Desktop\miscellaneous\med-harvest\TMK\medicinenet\${m}${i}.xml" charset="UTF-8">
+        <template>
+            <![CDATA[ <file1> ]]>
+        </template>
+                <xquery>
+                    <xq-param name="doc">
+                        <html-to-xml>
+                             <http url="${articleUrl}"/>
+                        </html-to-xml>
+                    </xq-param>
+                    <xq-expression><![CDATA[
+                        declare variable $doc as node() external;
+                        
+                       
+                        let $title := data($doc//div[@id='headline']//h1)
+                        let $symp := data($doc//div[@class='wrapper']//h3 | $doc//div[@class='wrapper']//p//text()[normalize-space()] |  $doc//div[@class='wrapper']//p//following-sibling::ul//text()[normalize-space()] ) 
+                        let $symp := string-join(data($symp),' ')
+                        let $nl := "&#10;"
+                        let $title := concat(data($title), $nl) 
+                        let $title := concat('TITLE: ', data($title)) 
+                        let $symprefine := replace(data($symp),'What[A-Za-z \n]*(symptoms|symptom)[A-Za-z \n]*\?', '&#10;SYMPTOMS: ')
+                        let $symprefine := replace(data($symprefine),'What[A-Za-z \n]*(causes|cause)[A-Za-z \n]*\?', '&#10;CAUSES: ')
+                        let $symprefine := replace(data($symprefine),'What[A-Za-z \n]*(treatment|treated|treat)[A-Za-z \n]*\?', '&#10;TREATMENT: ')
+                        let $symprefine := replace(data($symprefine),'[A-Z]+[A-Za-z \n]*(prevented|prevent)[A-Za-z \n]*\?', '&#10;PREVENTION: ')
+                        let $symprefine := replace(data($symprefine),'[A-Z]+[A-Za-z \n]*(diagnosed|diagnos)[A-Za-z \n]*\?', '&#10;DIAGNOSIS: ')
+                        let $symprefine := replace(data($symprefine),'[A-Z]+[A-Za-z \n]*(complications|complication)[A-Za-z \n]*\?', '&#10;COMPLCATIONS: ')
+                        let $symprefine := replace(data($symprefine),'[A-Z]+[A-Za-z \n]*(risk|risk factors)[A-Za-z \n]*\?', '&#10;RISKS: ')
+                        let $symprefine := replace(data($symprefine),'[A-Z]+[A-Za-z \n]*facts [A-Za-z \n]*\?', '&#10;ABOUT: ')
+                        let $symprefine := replace(data($symprefine),'[A-Z]+[A-Za-z \n]*facts ', '&#10;ABOUT: ')
+                            return
+                                <first>
+                                    {data($title)}
+                                    {data($symprefine)}
+                                </first>
+                    ]]></xq-expression>
+                </xquery>
+                
+                 <![CDATA[ </file1> ]]>
+              </file>
+              
+            </body>
+             
+        </loop>
+        
+      </body>
+    </loop>
+    
+</config>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ 
+<config charset="ISO-8859-1">
+    
+    <var-def name="startUrl">https://www.niams.nih.gov/health-topics/all-diseases</var-def>
+    
+    
+        
+        <loop item="articleUrl" index="i">
+            <!-- collects URLs of all articles from the front page -->
+            <list>
+                <xpath expression="//div[@class='text-card clearfix']//h3[@class='icon-card-title']//a//@href">
+                    <html-to-xml>
+                        <http url="${startUrl}"/>
+                    </html-to-xml>
+                </xpath>
+            </list>
+            
+            <!-- downloads each article and extract data from it -->
+            <body>
+            	
+            	<file action="write" path="C:\Users\sanar\Desktop\miscellaneous\med-harvest\TMK\niams\${i}.xml" charset="UTF-8">
+        <template>
+            <![CDATA[ <file1> ]]>
+        </template>
+                <xquery>
+                    <xq-param name="doc">
+                         <html-to-xml>
+                            <http url="${sys.fullUrl(startUrl, articleUrl)}?&amp;pagewanted=print"/>
+                        </html-to-xml>
+                    </xq-param>
+                    <xq-expression><![CDATA[
+                        declare variable $doc as node() external;
+                        
+                       
+                        let $title := data($doc//div[@id='block-pagetitle']//h1//text())
+                         let $title:= concat('&#10;TITLE: ',data($title))
+                        let $about := data($doc//div[@itemprop='description']//p//text()[normalize-space()] | $doc//div[@itemprop='description']//p//following-sibling::ul//text()) 
+                         let $about:= concat('&#10;ABOUT: ',string-join(data($about),' '))
+                        let $symp := data($doc//div[@itemprop='signOrSymptom']//p//text() | $doc//div[@itemprop='signOrSymptom']//p//following-sibling::ul//text())
+                         let $symp:= concat('&#10;SYMPTOMS:',string-join(data($symp),' '))
+                        let $cause := data($doc//div[@itemprop='cause']//p//text() | $doc//div[@itemprop='cause']//p//following-sibling::ul//text())  
+                         let $cause:= concat('&#10;CAUSES:',string-join(data($cause),' '))
+                        let $diagnosis := data($doc//div[@itemprop='differentialDiagnosis']//p//text() | $doc//div[@itemprop='differentialDiagnosis']//p//following-sibling::ul//text())   
+                         let $diagnosis:= concat('&#10;DIAGNOSIS:',string-join(data($diagnosis),' '))
+                        let $treatment := data($doc//div[@itemprop='possibleTreatment']//p//text() | $doc//div[@itemprop='possibleTreatment']//p//following-sibling::ul//text())   
+                         let $treatment:= concat('&#10;TREATMENT:',string-join(data($treatment),' '))
+                        let $specialist := data($doc//div[@itemprop='relevantSpecialty']//p//text() | $doc//div[@itemprop='relevantSpecialty']//p//following-sibling::ul//text())  
+                         let $specialist:= concat('&#10;SPECIALIST:',string-join(data($specialist),' '))
+                        let $prevention := data($doc//div[@itemprop='pathophysiology']//p//text() | $doc//div[@itemprop='pathophysiology']//p//following-sibling::ul//text())  
+                         let $prevention:= concat('&#10;PREVENTION:',string-join(data($prevention),' ')) 
+                        let $epidemiology:=data($doc//div[@itemprop='epidemiology']//p//text() | $doc//div[@itemprop='epidemiology']//p//following-sibling::ul//text())
+                         let $epidemiology:= concat('&#10;EPIDEMIOLOGY:',string-join(data($epidemiology),' '))
+                         
+               
+                            return
+                                <first>
+                                    {data($title)}
+                                    {data($about)}
+                                    {data($symp)}
+                                    {data($cause)}
+                                    {data($treatment)}
+                                    {data($diagnosis)}
+                                    {data($prevention)}
+                                    {data($specialist)}
+                                    {data($epidemiology)}
+                                </first>
+                    ]]></xq-expression>
+                </xquery>
+                
+                     <![CDATA[ </diseases> ]]>
+    </file>
+            </body>
+        </loop>
+        
+   
+    
+</config>
